@@ -1,0 +1,1 @@
+export { bearerAuth } from "./bearerAuth";
