@@ -1,39 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     List:
- *       type: object
- *       required:
- *         - title
- *         - board
- *       properties:
- *         _id:
- *           type: string
- *           description: Auto-generated MongoDB ID
- *         title:
- *           type: string
- *           description: Title of the list
- *         board:
- *           type: string
- *           description: ID of the board this list belongs to
- *         cards:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of Card IDs in this list
- *         position:
- *           type: number
- *           description: Position of the list in the board
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- */
 export interface IList extends Document {
   title: string;
   board: mongoose.Types.ObjectId;

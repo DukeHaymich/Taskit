@@ -7,6 +7,7 @@ import { IUser } from "../models/User";
 interface BoardBody {
   title?: string;
   description?: string;
+  backgroundColor?: string;
 }
 
 // Extend Request type to include user
@@ -15,9 +16,9 @@ interface AuthRequest extends Request<{}, {}, BoardBody> {
 }
 
 // Get all boards
-export const getAllBoards = async (_req: Request, res: Response) => {
+export const getAllBoards = async (req: Request, res: Response) => {
   try {
-    const boards = await Board.find();
+    const boards = await Board.find({ owner: req.user._id });
     res.json(boards);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -30,6 +31,7 @@ export const createBoard = async (req: AuthRequest, res: Response) => {
     title: req.body.title,
     description: req.body.description,
     owner: req.user._id,
+    backgroundColor: req.body.backgroundColor || "#0076A8",
   });
 
   try {
@@ -51,7 +53,11 @@ export const getBoardById = async (
   res: Response
 ) => {
   try {
-    const board = await Board.findById(req.params.id).populate("lists");
+    const board = await Board.findById(req.params.id).populate({
+      path: "lists",
+      options: { sort: { position: 1 } },
+      populate: { path: "cards", options: { sort: { position: 1 } } },
+    });
     if (!board) {
       return res.status(404).json({ message: "Board not found" });
     }
@@ -74,6 +80,8 @@ export const updateBoard = async (
 
     if (req.body.title) board.title = req.body.title;
     if (req.body.description) board.description = req.body.description;
+    if (req.body.backgroundColor)
+      board.backgroundColor = req.body.backgroundColor;
 
     const updatedBoard = await board.save();
     res.json(updatedBoard);

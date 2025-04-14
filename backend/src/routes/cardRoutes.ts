@@ -1,12 +1,9 @@
-import { Router, RequestHandler } from "express";
-import { ParamsDictionary } from "express-serve-static-core";
-import Card from "../models/Card";
-import List from "../models/List";
+import { RequestHandler, Router } from "express";
 import {
-  getCardsByList,
   createCard,
-  updateCard,
   deleteCard,
+  getCardsByList,
+  updateCard,
 } from "../controllers/cardController";
 
 interface CardBody {

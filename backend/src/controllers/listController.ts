@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { ParamsDictionary } from "express-serve-static-core";
 import List from "../models/List";
+import Card from "../models/Card";
 import Board from "../models/Board";
 
 interface ListBody {
@@ -15,9 +16,9 @@ export const getListsByBoard = async (
   res: Response
 ) => {
   try {
-    const lists = await List.find({ board: req.params.boardId }).populate(
-      "cards"
-    );
+    const lists = await List.find({ board: req.params.boardId })
+      .sort({ position: 1 })
+      .populate("cards");
     res.json(lists);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -67,7 +68,31 @@ export const updateList = async (
     }
 
     if (req.body.title) list.title = req.body.title;
-    if (req.body.position !== undefined) list.position = req.body.position;
+    // Update position
+    if (req.body.position !== undefined) {
+      const [min, max] =
+        list.position < req.body.position
+          ? [list.position, req.body.position]
+          : [req.body.position, list.position];
+
+      const updatedLists = await List.find({
+        board: list.board,
+        position: { $gte: min, $lte: max },
+      });
+
+      updatedLists.forEach((updatedList: any) => {
+        // Skip updating the position if the list is the same
+        if (updatedList._id.equals(list._id)) return;
+        if (req.body.position !== undefined) {
+          // Linting
+          updatedList.position += list.position > req.body.position ? 1 : -1;
+        }
+      });
+      list.position = req.body.position;
+      updatedLists.map(async (updatedList: any) => {
+        await updatedList.save();
+      });
+    }
 
     const updatedList = await list.save();
     res.json(updatedList);
@@ -87,12 +112,17 @@ export const deleteList = async (
       return res.status(404).json({ message: "List not found" });
     }
 
+    // Find and delete all cards associated with the list
+    await Card.deleteMany({ list: list._id });
+
     // Remove list reference from board
     await Board.findByIdAndUpdate(list.board, { $pull: { lists: list._id } });
 
+    // Delete the list
     await list.deleteOne();
-    res.json({ message: "List deleted" });
+    res.json({ message: "List and associated cards deleted successfully" });
   } catch (error: any) {
+    console.error("Error deleting list:", error);
     res.status(500).json({ message: error.message });
   }
 };

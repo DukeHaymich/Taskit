@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import User, { IUser } from "../models/User";
 import { generateToken } from "../utils/jwt";
-import { AuthRequest } from "../middleware/auth";
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -76,13 +75,12 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const getCurrentUser = async (req: AuthRequest, res: Response) => {
+export const getCurrentUser = async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-
-    const user = await User.findById(req.user.userId);
+    const user = await User.findById(req.user._id.toString());
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }

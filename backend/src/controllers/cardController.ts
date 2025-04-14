@@ -9,6 +9,8 @@ interface CardBody {
   description?: string;
   list?: string;
   position?: number;
+  completed?: boolean;
+  dueDate?: Date;
 }
 
 // Get all cards for a list
@@ -41,6 +43,8 @@ export const createCard = async (
       description: req.body.description,
       list: new mongoose.Types.ObjectId(req.body.list),
       position,
+      completed: req.body.completed || false,
+      dueDate: req.body.dueDate,
     });
 
     const newCard = await card.save();
@@ -70,20 +74,52 @@ export const updateCard = async (
     if (req.body.title) card.title = req.body.title;
     if (req.body.description !== undefined)
       card.description = req.body.description;
-    if (req.body.position !== undefined) card.position = req.body.position;
+    if (req.body.completed !== undefined) card.completed = req.body.completed;
+    if (req.body.dueDate) card.dueDate = req.body.dueDate;
 
     // Handle list change
-    if (req.body.list && req.body.list !== card.list.toString()) {
+    if (req.body.list) {
       // Remove card from old list
-      await List.findByIdAndUpdate(card.list, { $pull: { cards: card._id } });
+      const oldList = await List.findById(card.list);
+      if (oldList) {
+        oldList.cards = oldList.cards.filter((cardId) => {
+          return cardId.toString() !== (card as any)._id.toString();
+        });
+
+        // Update positions of cards in the old list
+        for (const cardId of oldList.cards) {
+          const updatedCard = await Card.findById(cardId);
+          if (updatedCard && updatedCard.position > card.position) {
+            updatedCard.position -= 1;
+            await updatedCard.save();
+          }
+        }
+        await oldList.save();
+      }
 
       // Add card to new list
-      await List.findByIdAndUpdate(req.body.list, {
-        $push: { cards: card._id },
-      });
+      const newList = await List.findById(req.body.list);
+      if (newList) {
+        // Update positions of cards in the new list
+        for (const cardId of newList.cards) {
+          const updatedCard = await Card.findById(cardId);
+          if (
+            updatedCard &&
+            req.body.position !== undefined &&
+            updatedCard.position >= req.body.position
+          ) {
+            updatedCard.position += 1;
+            await updatedCard.save();
+          }
+        }
+        newList.cards.push(card._id as mongoose.Types.ObjectId);
+        await newList.save();
+      }
 
+      // Update the card's list reference
       card.list = new mongoose.Types.ObjectId(req.body.list);
     }
+    if (req.body.position !== undefined) card.position = req.body.position;
 
     const updatedCard = await card.save();
     res.json(updatedCard);

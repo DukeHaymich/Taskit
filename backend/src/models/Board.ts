@@ -1,35 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     Board:
- *       type: object
- *       required:
- *         - title
- *       properties:
- *         _id:
- *           type: string
- *           description: Auto-generated MongoDB ID
- *         title:
- *           type: string
- *           description: Title of the board
- *         description:
- *           type: string
- *           description: Optional description of the board
- *         lists:
- *           type: array
- *           items:
- *             type: string
- *           description: Array of List IDs belonging to this board
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- */
 export interface IBoard extends Document {
   title: string;
   owner: mongoose.Types.ObjectId;
@@ -37,6 +7,7 @@ export interface IBoard extends Document {
   lists: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+  backgroundColor?: string;
 }
 
 const BoardSchema = new Schema(
@@ -61,6 +32,11 @@ const BoardSchema = new Schema(
         ref: "List",
       },
     ],
+    backgroundColor: {
+      type: String,
+      trim: true,
+      default: "#0076A8",
+    },
   },
   {
     timestamps: true,

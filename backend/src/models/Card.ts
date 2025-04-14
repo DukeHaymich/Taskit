@@ -1,42 +1,12 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     Card:
- *       type: object
- *       required:
- *         - title
- *         - list
- *       properties:
- *         _id:
- *           type: string
- *           description: Auto-generated MongoDB ID
- *         title:
- *           type: string
- *           description: Title of the card
- *         description:
- *           type: string
- *           description: Optional description of the card
- *         list:
- *           type: string
- *           description: ID of the list this card belongs to
- *         position:
- *           type: number
- *           description: Position of the card in the list
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- */
 export interface ICard extends Document {
   title: string;
   description?: string;
   list: mongoose.Types.ObjectId;
   position: number;
+  completed: boolean;
+  dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +31,13 @@ const CardSchema = new Schema(
       type: Number,
       required: true,
       default: 0,
+    },
+    completed: {
+      type: Boolean,
+      default: false,
+    },
+    dueDate: {
+      type: Date,
     },
   },
   {
