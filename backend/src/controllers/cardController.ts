@@ -75,7 +75,7 @@ export const updateCard = async (
     if (req.body.description !== undefined)
       card.description = req.body.description;
     if (req.body.completed !== undefined) card.completed = req.body.completed;
-    if (req.body.dueDate) card.dueDate = req.body.dueDate;
+    card.dueDate = req.body.dueDate;
 
     // Handle list change
     if (req.body.list) {
